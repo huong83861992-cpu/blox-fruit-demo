@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Blox Fruit Demo</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0b0b1a;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    h1 { margin: 10px; }
+    canvas { background: #222; display: block; margin: auto; }
+    #ui {
+      margin: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .fruit {
+      border: 2px solid #555;
+      border-radius: 10px;
+      padding: 5px;
+      background: #111;
+      cursor: pointer;
+      width: 64px;
+      height: 64px;
+    }
+    .fruit img { width: 100%; height: 100%; }
+    .fruit.active { border-color: gold; box-shadow: 0 0 10px gold; }
+  </style>
+</head>
+<body>
+  <h1>🍇 Mini Blox Fruit Demo 🍎</h1>
+  <canvas id="gameCanvas" width="600" height="400"></canvas>
+  <div id="ui"></div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // 15 loại fruit (demo icon free từ flaticon)
+    const fruits = [
+      {name:"Fire", icon:"https://cdn-icons-png.flaticon.com/512/482/482469.png", sound:"https://actions.google.com/sounds/v1/alarms/beep_short.ogg", color:"orange"},
+      {name:"Ice", icon:"https://cdn-icons-png.flaticon.com/512/3176/3176290.png", sound:"https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg", color:"cyan"},
+      {name:"Lightning", icon:"https://cdn-icons-png.flaticon.com/512/869/869869.png", sound:"https://actions.google.com/sounds/v1/weather/thunder_crack.ogg", color:"yellow"},
+      {name:"Earth", icon:"https://cdn-icons-png.flaticon.com/512/2917/2917995.png", sound:"https://actions.google.com/sounds/v1/impacts/wood_plank_flicks.ogg", color:"brown"},
+      {name:"Wind", icon:"https://cdn-icons-png.flaticon.com/512/553/553416.png", sound:"https://actions.google.com/sounds/v1/weather/wind_whistling.ogg", color:"lightgreen"},
+      {name:"Water", icon:"https://cdn-icons-png.flaticon.com/512/414/414974.png", sound:"https://actions.google.com/sounds/v1/water/water_droplet.ogg", color:"blue"},
+      {name:"Dark", icon:"https://cdn-icons-png.flaticon.com/512/2950/2950011.png", sound:"https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg", color:"purple"},
+      {name:"Light", icon:"https://cdn-icons-png.flaticon.com/512/869/869869.png", sound:"https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg", color:"gold"},
+      {name:"Sand", icon:"https://cdn-icons-png.flaticon.com/512/2909/2909761.png", sound:"https://actions.google.com/sounds/v1/impacts/splat.ogg", color:"khaki"},
+      {name:"Smoke", icon:"https://cdn-icons-png.flaticon.com/512/618/618596.png", sound:"https://actions.google.com/sounds/v1/cartoon/clang.ogg", color:"gray"},
+      {name:"Gravity", icon:"https://cdn-icons-png.flaticon.com/512/702/702814.png", sound:"https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg", color:"pink"},
+      {name:"Phoenix", icon:"https://cdn-icons-png.flaticon.com/512/616/616408.png", sound:"https://actions.google.com/sounds/v1/animals/bird_chickadee_call.ogg", color:"red"},
+      {name:"Dragon", icon:"https://cdn-icons-png.flaticon.com/512/616/616408.png", sound:"https://actions.google.com/sounds/v1/animals/dragon_growl.ogg", color:"darkred"},
+      {name:"Venom", icon:"https://cdn-icons-png.flaticon.com/512/616/616408.png", sound:"https://actions.google.com/sounds/v1/cartoon/clang.ogg", color:"green"},
+      {name:"Quake", icon:"https://cdn-icons-png.flaticon.com/512/616/616408.png", sound:"https://actions.google.com/sounds/v1/impacts/crash.ogg", color:"white"}
+    ];
+
+    // tạo UI
+    const ui = document.getElementById("ui");
+    let currentFruit = 0;
+    fruits.forEach((f,i)=>{
+      let div = document.createElement("div");
+      div.className="fruit"+(i===0?" active":"");
+      div.innerHTML=`<img src="${f.icon}" title="${f.name}">`;
+      div.onclick=()=>{selectFruit(i)};
+      ui.appendChild(div);
+    });
+
+    function selectFruit(i){
+      document.querySelectorAll(".fruit").forEach(el=>el.classList.remove("active"));
+      document.querySelectorAll(".fruit")[i].classList.add("active");
+      currentFruit=i;
+    }
+
+    // player
+    const player = {x:300,y:200,r:20};
+    const projectiles=[];
+    function shoot(){
+      const f = fruits[currentFruit];
+      const audio = new Audio(f.sound); audio.play();
+      projectiles.push({x:player.x,y:player.y,r:10,color:f.color,dx:(Math.random()-0.5)*6,dy:(Math.random()-0.5)*6});
+    }
+
+    window.addEventListener("keydown",e=>{
+      if(e.code==="Space"){ shoot(); }
+      if(e.key>="1" && e.key<="9"){ selectFruit(Number(e.key)-1); }
+    });
+
+    function loop(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.beginPath();
+      ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+      ctx.fillStyle="white"; ctx.fill();
+      projectiles.forEach(p=>{
+        p.x+=p.dx; p.y+=p.dy;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=p.color; ctx.fill();
+      });
+      requestAnimationFrame(loop);
+    }
+    loop();
+  </script>
+</body>
+</html>
