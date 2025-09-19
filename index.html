@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Blox Fruit — Full Demo (Tiếng Việt)</title>
+<style>
+:root{--bg:#071022;--panel:rgba(0,0,0,0.5);--accent:#1e90ff}
+html,body{height:100%;margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,system-ui,Arial,Helvetica;overflow:hidden}
+#ui{position:fixed;left:12px;top:12px;z-index:1200}
+.panel{background:var(--panel);padding:8px;border-radius:8px;margin-bottom:8px;min-width:260px}
+#scorebox{position:fixed;right:12px;top:12px;z-index:1200;background:var(--panel);padding:8px;border-radius:8px}
+#canvasWrap{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center}
+canvas{background:linear-gradient(180deg,#071022,#02131b);display:block;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,0.7)}
+#fruitBar{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;display:flex;gap:6px;z-index:1200}
+.slot{width:64px;height:64px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:center;position:relative;border:1px solid rgba(255,255,255,0.04);font-size:12px;color:#fff;flex-direction:column}
+.cd{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:8px;background:rgba(0,0,0,0.66);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;display:none}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:860px;max-width:96%;background:rgba(5,10,20,0.98);padding:14px;border-radius:12px;z-index:2200;display:none}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.box{flex:1;min-width:200px;background:rgba(255,255,255,0.03);padding:8px;border-radius:8px}
+button.primary{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer}
+#gachaOpen,#shopOpen{position:fixed;right:12px;z-index:1200;padding:10px 12px;border-radius:8px;border:none;color:white;cursor:pointer}
+#gachaOpen{bottom:12px;background:#ff6b6b}
+#shopOpen{bottom:72px;background:#3ab}
+#flash{position:fixed;left:50%;top:12%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,0.6);padding:12px 18px;border-radius:10px;display:none}
+.hud-small{font-size:13px;color:#cfe8ff}
+.masteryBar{width:120px;height:8px;background:#222;border-radius:6px;overflow:hidden}
+.masteryFill{height:100%;background:gold;width:0%}
+input[type=text]{padding:6px;border-radius:6px;border:1px solid #444;background:rgba(255,255,255,0.03);color:#fff}
+footer{position:fixed;left:12px;bottom:12px;color:#9fb7cf;font-size:12px}
+</style>
+</head>
+<body>
+  <div id="ui">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong>Blox Fruit — Full Demo (Tiếng Việt)</strong>
+          <div class="hud-small">WASD: di chuyển · Click trái: đánh thường · 1–4: chiêu · G: Gacha · H: Shop · R: Lưu</div>
+        </div>
+        <div style="text-align:right">
+          <div>Vàng: <strong id="gold">0</strong></div>
+          <div>Level: <strong id="level">1</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div>Quả đang dùng: <strong id="currentFruit">Chưa có</strong></div>
+      <div style="margin-top:6px">Mastery: <strong id="masteryVal">0</strong> <span class="masteryBar"><div id="masteryFill" class="masteryFill"></div></span></div>
+      <div style="margin-top:6px">Chiêu mở: <span id="skillsOpen">-</span></div>
+      <div style="margin-top:6px">EXP: <span id="exp">0</span>/<span id="expMax">100</span>
+        <span style="display:inline-block;width:160px;height:8px;background:#222;border-radius:6px;overflow:hidden;margin-left:8px"><div id="expFill" style="height:100%;background:#36c;width:0%"></div></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="scorebox" class="panel">
+    <div>HP: <span id="hp">100</span> / <span id="hpMax">100</span></div>
+    <div style="margin-top:6px"><button id="quality" class="primary">Quality: High</button></div>
+  </div>
+
+  <div id="canvasWrap"><canvas id="gameCanvas" width="1200" height="720"></canvas></div>
+
+  <div id="fruitBar"></div>
+
+  <button id="gachaOpen">Gacha (G)</button>
+  <button id="shopOpen">Shop (H)</button>
+
+  <div id="gachaModal" class="modal">
+    <h3>Máy Gacha (mở Level ≥ 30)</h3>
+    <div class="row" id="gachaMachinesRow"></div>
+    <h4>Inventory</h4>
+    <div id="invGacha" style="max-height:200px;overflow:auto;background:rgba(0,0,0,0.2);padding:8px;border-radius:8px"></div>
+    <div style="text-align:right;margin-top:8px"><button id="closeGacha" class="primary">Đóng</button></div>
+  </div>
+
+  <div id="shopModal" class="modal">
+    <h3>Cửa hàng</h3>
+    <div class="row" id="shopRow"></div>
+    <div style="text-align:right;margin-top:8px"><button id="closeShop" class="primary">Đóng</button></div>
+  </div>
+
+  <div id="codeBox" style="position:fixed;right:12px;top:12px;z-index:1300;width:300px">
+    <div class="panel" style="padding:10px">
+      <h4>Mã thưởng</h4>
+      <input id="codeInput" placeholder="Nhập mã (FREEEXP,...)" type="text" style="width:100%"><div style="text-align:right;margin-top:8px"><button id="applyCode" class="primary">Áp dụng</button></div>
+    </div>
+  </div>
+
+  <div id="flash"></div>
+  <footer>Demo — copy dán file index.html & bật GitHub Pages</footer>
+
+<script>
+/* ---------- Cấu hình & trạng thái ---------- */
+const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const flashEl = document.getElementById('flash');
+
+const storageKey = 'bf_state_v1';
+const MAX_LEVEL = 670;
+function expToNext(lv){ return Math.floor(100 * Math.pow(1.03, lv-1)); } // moderate growth
+
+// Fruit definitions (15)
+const fruits = [
+  {id:'fire', name:'Hỏa', rarity:'rare', color:'#ff7b4d', price:500, masteryScale:1.0},
+  {id:'water', name:'Thủy', rarity:'rare', color:'#40b6ff', price:450, masteryScale:1.0},
+  {id:'wind', name:'Phong', rarity:'common', color:'#bfefff', price:120, masteryScale:0.6},
+  {id:'ice', name:'Băng', rarity:'rare', color:'#bfe8ff', price:480, masteryScale:1.0},
+  {id:'thunder', name:'Lôi', rarity:'rare', color:'#fff58a', price:520, masteryScale:1.1},
+  {id:'dragon', name:'Long', rarity:'legend', color:'#ffb857', price:2500, masteryScale:1.6},
+  {id:'bomb', name:'Bom', rarity:'common', color:'#666666', price:150, masteryScale:0.5},
+  {id:'earth', name:'Địa', rarity:'common', color:'#a87a4d', price:180, masteryScale:0.6},
+  {id:'sand', name:'Cát', rarity:'common', color:'#d4b77a', price:160, masteryScale:0.6},
+  {id:'wood', name:'Mộc', rarity:'common', color:'#64b264', price:170, masteryScale:0.6},
+  {id:'metal', name:'Kim', rarity:'rare', color:'#c0c0c0', price:600, masteryScale:1.2},
+  {id:'demon', name:'Quỷ', rarity:'legend', color:'#6b2b2b', price:2400, masteryScale:1.5},
+  {id:'time', name:'Thời', rarity:'legend', color:'#b9b0ff', price:3000, masteryScale:1.5},
+  {id:'space', name:'Không', rarity:'legend', color:'#88ccff', price:2800, masteryScale:1.5},
+  {id:'gold', name:'Kim', rarity:'rare', color:'#ffd166', price:700, masteryScale:1.1}
+];
+const fruitById = {}; fruits.forEach(f=> fruitById[f.id]=f);
+
+// initial state (load or default)
+let state = JSON.parse(localStorage.getItem(storageKey) || 'null') || {
+  pos:{x:W/2,y:H/2}, level:1, exp:0, gold:0, hp:100, hpMax:100,
+  currentFruit:null, mastery:{}, inventory:{}, openedChests:{}
+};
+fruits.forEach(f=> { if(state.mastery[f.id]===undefined) state.mastery[f.id]=0; if(state.inventory[f.id]===undefined) state.inventory[f.id]=0; });
+
+/* ---------- UI references ---------- */
+const goldEl = document.getElementById('gold'), levelEl = document.getElementById('level'),
+      currentFruitEl = document.getElementById('currentFruit'), masteryValEl = document.getElementById('masteryVal'),
+      masteryFillEl = document.getElementById('masteryFill'), skillsOpenEl = document.getElementById('skillsOpen'),
+      expEl = document.getElementById('exp'), expMaxEl = document.getElementById('expMax'),
+      expFillEl = document.getElementById('expFill'), hpEl = document.getElementById('hp'), hpMaxEl = document.getElementById('hpMax');
+
+const fruitBar = document.getElementById('fruitBar');
+const shopRow = document.getElementById('shopRow'), gachaMachinesRow = document.getElementById('gachaMachinesRow'), invGachaEl = document.getElementById('invGacha');
+const gachaModal = document.getElementById('gachaModal'), shopModal = document.getElementById('shopModal');
+
+/* ---------- Build fruit bar (first 12) ---------- */
+fruits.slice(0,12).forEach((f,i)=>{
+  const slot = document.createElement('div'); slot.className='slot'; slot.dataset.id=f.id; slot.dataset.idx=i;
+  const keyLabel = (i<9) ? String(i+1) : ['Q','W','E','R','T','Y'][i-9] || String(i+1);
+  slot.innerHTML = `<div style="text-align:center"><div class="key">${keyLabel}</div><div class="label">${f.name}</div></div>`;
+  const cd = document.createElement('div'); cd.className='cd'; cd.style.display='none'; slot.appendChild(cd);
+  slot.addEventListener('click', ()=> { equipFruit(f.id); });
+  fruitBar.appendChild(slot);
+});
+
+/* ---------- Shop & Gacha setup ---------- */
+fruits.forEach(f=>{
+  const el = document.createElement('div'); el.className='box';
+  el.innerHTML = `<strong>${f.name}</strong><div style="font-size:12px;color:#cfe8ff">${f.rarity}</div><div style="margin-top:6px">Giá: <strong>${f.price}</strong></div><div style="margin-top:8px"><button class="primary buy-btn" data-id="${f.id}">Mua</button></div>`;
+  shopRow.appendChild(el);
+});
+shopRow.addEventListener('click', e=>{
+  const btn = e.target.closest('.buy-btn'); if(!btn) return;
+  const id = btn.dataset.id; const f = fruitById[id];
+  if(state.gold < f.price){ showFlash('Không đủ vàng'); return; }
+  state.gold -= f.price; state.inventory[id] = (state.inventory[id]||0) + 1; showFlash('Đã mua ' + f.name); saveState(); renderHud(); renderInvGacha();
+});
+
+const gachaMachines = [
+  {id:'normal', title:'Máy Thường', cost:50, rates:{common:70, rare:25, legend:5}},
+  {id:'advanced', title:'Máy Xịn', cost:200, rates:{common:40, rare:40, legend:20}},
+  {id:'legend', title:'Máy Huyền', cost:1000, rates:{common:20, rare:40, legend:40}}
+];
+gachaMachines.forEach(m=>{
+  const el = document.createElement('div'); el.className='box';
+  el.innerHTML = `<strong>${m.title}</strong><div>Giá: <strong>${m.cost}</strong></div><div style="margin-top:8px"><button class="primary gacha-btn" data-id="${m.id}">Quay</button></div>`;
+  gachaMachinesRow.appendChild(el);
+});
+gachaMachinesRow.addEventListener('click', e=>{
+  const btn = e.target.closest('.gacha-btn'); if(!btn) return;
+  rollGacha(btn.dataset.id);
+});
+function renderInvGacha(){
+  invGachaEl.innerHTML = '';
+  fruits.forEach(f=>{
+    const div = document.createElement('div'); div.style.display='flex'; div.style.justifyContent='space-between'; div.style.padding='6px'; div.style.borderBottom='1px solid rgba(255,255,255,0.03)';
+    div.innerHTML = `<div><strong>${f.name}</strong> <div style="font-size:12px;color:#cfe8ff">Mastery: ${state.mastery[f.id]||0}</div></div><div>${state.inventory[f.id]||0}</div>`;
+    invGachaEl.appendChild(div);
+  });
+}
+
+/* ---------- Save / Load ---------- */
+function saveState(){ localStorage.setItem(storageKey, JSON.stringify(state)); localStorage.setItem('bf_level', String(state.level)); localStorage.setItem('bf_exp', String(state.exp)); localStorage.setItem('bf_gold', String(state.gold)); }
+function showFlash(text, time=1400){ flashEl.innerText = text; flashEl.style.display='block'; flashEl.style.opacity='1'; setTimeout(()=>{ flashEl.style.opacity='0'; setTimeout(()=> flashEl.style.display='none',300); }, time); }
+
+/* ---------- Player & Input ---------- */
+let player = {x: state.pos.x, y: state.pos.y, r: 18};
+const keys = {w:false,a:false,s:false,d:false};
+window.addEventListener('keydown', e=>{
+  const k=e.key.toLowerCase(); if(k==='w') keys.w=true; if(k==='a') keys.a=true; if(k==='s') keys.s=true; if(k==='d') keys.d=true;
+  if(['1','2','3','4'].includes(e.key)) useSkill(parseInt(e.key));
+  if(k==='r'){ saveState(); showFlash('Đã lưu progress'); }
+  if(k==='g') openGacha(); if(k==='h') openShop();
+});
+window.addEventListener('keyup', e=>{ const k=e.key.toLowerCase(); if(k==='w') keys.w=false; if(k==='a') keys.a=false; if(k==='s') keys.s=false; if(k==='d') keys.d=false; });
+
+// left click = normal attack
+canvas.addEventListener('mousedown', (ev)=>{ if(ev.button===0) performNormalAttack(); });
+
+// ----- Entities: projectiles, enemies, chests -----
+let projectiles = [], enemies = [], chests = [];
+
+/* ---------- Enemy spawn ---------- */
+function spawnEnemiesForLevel(lv){
+  const count = Math.min(10, 3 + Math.floor(lv/5));
+  for(let i=0;i<count;i++){
+    const size = 10 + Math.min(24, Math.floor(lv/12));
+    const hp = Math.round(18 + lv*6 + Math.random()*lv*2);
+    const en = {id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), x: Math.random()*(W-200)+100, y: Math.random()*(H-200)+100, r:size, hp, hpMax:hp, lvl:lv, speed: 30 + Math.min(90, Math.floor(lv/3)), lastHit:0};
+    enemies.push(en);
+  }
+}
+
+/* ---------- Projectiles & damage ---------- */
+function spawnProjectile(x,y,vx,vy,life,dmg,color,fruitId){
+  projectiles.push({x,y,vx,vy,life,dmg,color,fruitId});
+}
+function applyDamageToEnemy(e, dmg, fruitId){
+  e.hp -= dmg;
+  if(fruitId){
+    const f = fruitById[fruitId];
+    const gain = Math.max(1, Math.round(dmg * (f.masteryScale||1) * 0.6));
+    state.mastery[fruitId] = (state.mastery[fruitId]||0) + gain;
+  }
+  if(e.hp <= 0){
+    // reward
+    const goldGain = 5 + e.lvl;
+    const expGain = 6 + Math.floor(e.lvl/2);
+    state.gold += goldGain; state.exp += expGain;
+    enemies = enemies.filter(x=>x!==e);
+    showFlash(`Tiêu diệt +${goldGain} vàng +${expGain} EXP`);
+    saveState(); renderHud();
+  }
+}
+
+/* ---------- Normal attack ---------- */
+function performNormalAttack(){
+  const base = 8 + Math.floor(state.level/8);
+  let dmg = base;
+  if(state.currentFruit){
+    const f = fruitById[state.currentFruit];
+    dmg = Math.round(base * (1 + 0.15 * rarityMultiplier(f.rarity)));
+  }
+  // hit nearest within range
+  let nearest = null, nd=1e9;
+  enemies.forEach(en=>{ const d = distance(player.x,player.y,en.x,en.y); if(d < nd){ nd=d; nearest=en; }});
+  if(nearest && nd < 120){
+    applyDamageToEnemy(nearest, dmg, state.currentFruit);
+    showFlash('Đánh thường: -'+dmg);
+    saveState(); renderHud();
+  } else showFlash('Không có quái gần');
+}
+
+/* ---------- Skill system ---------- */
+function getThresholdsByRarity(r){
+  if(r==='common') return [50,150,300];
+  if(r==='rare') return [100,300,600];
+  return [200,600,1200];
+}
+function useSkill(idx){
+  if(!state.currentFruit){ showFlash('Bạn chưa ăn quả'); return; }
+  const fId = state.currentFruit; const f = fruitById[fId];
+  const m = state.mastery[fId]||0; const thr = getThresholdsByRarity(f.rarity);
+  if(idx>1 && m < thr[idx-2]){ showFlash(`Chiêu ${idx} chưa mở (cần ${thr[idx-2]} mastery)`); return; }
+  // skill behaviors (simplified VFX + damage)
+  if(fId==='fire'){
+    if(idx===1) spawnBurst(6, 220, Math.round(18 + state.level/6), fId, '#ff7b4d');
+    if(idx===2) spawnBurst(10, 280, Math.round(40 + state.level/4), fId, '#ff9c6a');
+    if(idx===3) heavyNearest(Math.round(120 + state.level*1.3), fId);
+    if(idx===4) pierceLine(Math.round(220 + state.level*2), fId);
+  } else if(fId==='water'){
+    if(idx===1) spawnBurst(8,180,Math.round(16+state.level/6),fId,'#4fc3ff');
+    if(idx===2) aoe(150,Math.round(36+state.level/4),fId);
+    if(idx===3) heavyNearest(Math.round(110+state.level*1.4), fId);
+    if(idx===4) pierceLine(Math.round(200+state.level*2), fId);
+  } else {
+    // generic
+    if(idx===1) spawnBurst(6,200,Math.round(12+state.level/6),f.color,fId);
+    if(idx===2) spawnBurst(8,240,Math.round(30+state.level/4),f.color,fId);
+    if(idx===3) aoe(120,Math.round(80+state.level*1.2),f.color,fId);
+    if(idx===4) heavyNearest(Math.round(150+state.level*2.2), fId);
+  }
+  // reward mastery & exp
+  state.mastery[fId] = (state.mastery[fId]||0) + Math.round(10 * (f.masteryScale||1));
+  state.exp += Math.round(12 + state.level/5);
+  saveState(); renderHud();
+}
+
+/* skill helpers */
+function spawnBurst(count, speed, dmg, fruitId, color){
+  for(let i=0;i<count;i++){
+    const ang = (i/count)*Math.PI*2 + (Math.random()-0.5)*0.18;
+    spawnProjectile(player.x, player.y, Math.cos(ang)*speed, Math.sin(ang)*speed, 1.5, dmg, color, fruitId);
+  }
+  showFlash(`Dùng chiêu: ${dmg} dmg x${count}`);
+}
+function aoe(radius, dmg, fruitId){
+  enemies.forEach(e=>{ if(distance(player.x,player.y,e.x,e.y) <= radius) applyDamageToEnemy(e, dmg, fruitId); });
+  showFlash(`AOE ${radius}px: ${dmg} dmg`);
+}
+function heavyNearest(dmg, fruitId){
+  let nearest=null, nd=1e9; enemies.forEach(e=>{ const d=distance(player.x,player.y,e.x,e.y); if(d<nd){ nd=d; nearest=e; }});
+  if(nearest && nd < 1000) applyDamageToEnemy(nearest, dmg, fruitId), showFlash('Đánh mạnh -'+dmg);
+  else showFlash('Không có mục tiêu gần');
+}
+function pierceLine(dmg, fruitId){
+  enemies.forEach(e=>{ const dx=e.x-player.x, dy=e.y-player.y; if(Math.abs(dx)<90 && dy<160 && dy>-40) applyDamageToEnemy(e,dmg,fruitId); });
+  showFlash('Chiêu xuyên ' + dmg);
+}
+
+/* ---------- Chest system ---------- */
+function spawnChestsForLevel(lv){
+  chests = []; // new chests for new level
+  const count = 1 + Math.floor(Math.random()*2);
+  for(let i=0;i<count;i++){
+    const id = 'ch_'+lv+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    const c = {id, x:Math.random()*(W-200)+100, y:Math.random()*(H-200)+100, lv, opened:false};
+    if(state.openedChests[c.id]) c.opened=true;
+    if(!c.opened) chests.push(c);
+  }
+}
+function openChestNear(){
+  const found = chests.find(c=> distance(c.x,c.y,player.x,player.y) < 80);
+  if(!found){ showFlash('Không có rương gần'); return; }
+  const r = Math.random()*100;
+  if(r < 55){
+    const goldGain = 80 + Math.floor(Math.random()*160) + state.level*5;
+    state.gold += goldGain; showFlash('Mở rương: +' + goldGain + ' vàng');
+  } else if(r < 90){
+    const ex = 6 + Math.floor(Math.random()*8) + Math.floor(state.level/3);
+    state.exp += ex; showFlash('Mở rương: +' + ex + ' EXP');
+  } else {
+    const pool = Math.random()<0.2 ? fruits.filter(f=>f.rarity==='legend') : fruits.filter(f=>f.rarity==='rare');
+    const f = pool[Math.floor(Math.random()*pool.length)];
+    state.inventory[f.id] = (state.inventory[f.id]||0)+1; showFlash('Mở rương: nhận ' + f.name);
+  }
+  state.openedChests[found.id] = true;
+  chests = chests.filter(c=>c.id !== found.id);
+  saveState(); renderHud(); renderInvGacha();
+}
+
+/* ---------- Gacha ---------- */
+function rollGacha(machineId){
+  if(state.level < 30){ showFlash('Cần Level 30 để dùng Gacha'); return; }
+  const machine = gachaMachines.find(m=>m.id === machineId);
+  if(!machine) return;
+  if(state.gold < machine.cost){ showFlash('Không đủ vàng'); return; }
+  state.gold -= machine.cost;
+  const r = Math.random()*100; let chosen;
+  if(r < machine.rates.common) chosen = 'common';
+  else if(r < machine.rates.common + machine.rates.rare) chosen = 'rare';
+  else chosen = 'legend';
+  const pool = fruits.filter(f=> (chosen==='common' ? f.rarity==='common' : (chosen==='rare' ? f.rarity==='rare' : f.rarity==='legend')));
+  const f = pool[Math.floor(Math.random()*pool.length)];
+  state.inventory[f.id] = (state.inventory[f.id]||0) + 1;
+  showFlash(`Gacha: nhận ${f.name} [${chosen}]`);
+  saveState(); renderInvGacha(); renderHud();
+}
+
+/* ---------- Experience & Level up ---------- */
+function checkLevelUp(){
+  while(state.level < MAX_LEVEL && state.exp >= expToNext(state.level)){
+    state.exp -= expToNext(state.level);
+    state.level++;
+    state.hpMax = 100 + Math.floor(state.level * 0.6);
+    state.hp = state.hpMax;
+    showFlash('Lên cấp ' + state.level);
+    // spawn new enemies/chests on level up
+    spawnEnemiesForLevel(state.level); spawnChestsForLevel(state.level);
+  }
+}
+
+/* ---------- Utilities ---------- */
+function distance(x1,y1,x2,y2){ const dx=x1-x2, dy=y1-y2; return Math.sqrt(dx*dx+dy*dy); }
+function rarityMultiplier(r){ return (r==='common'?0.5: (r==='rare'?1.0:1.6)); }
+
+/* ---------- Rendering & loop ---------- */
+function renderHud(){
+  goldEl.innerText = state.gold; levelEl.innerText = state.level;
+  currentFruitEl.innerText = state.currentFruit ? fruitById[state.currentFruit].name : 'Chưa có';
+  const sel = state.currentFruit; const mval = sel ? (state.mastery[sel]||0) : 0;
+  masteryValEl.innerText = mval;
+  if(sel){
+    const thr = getThresholdsByRarity(fruitById[sel].rarity);
+    const next = thr.find(t=> mval < t) || thr[thr.length-1];
+    const prev = thr[thr.indexOf(next)-1] || 0;
+    const pct = Math.min(100, Math.max(0, Math.floor((mval - prev)/(next - prev)*100)));
+    masteryFillEl.style.width = isNaN(pct)?'0%':pct+'%';
+    const open = [1]; if(mval >= thr[0]) open.push(2); if(mval >= thr[1]) open.push(3); if(mval >= thr[2]) open.push(4);
+    skillsOpenEl.innerText = open.join(', ');
+  } else { masteryFillEl.style.width='0%'; skillsOpenEl.innerText='-'; }
+  const nextExp = expToNext(state.level); expEl.innerText = state.exp; expMaxEl.innerText = nextExp; expFillEl.style.width = Math.min(100, Math.floor(state.exp/nextExp*100)) + '%';
+  hpEl.innerText = state.hp; hpMaxEl.innerText = state.hpMax;
+}
+function draw(){
+  // clear
+  ctx.clearRect(0,0,W,H);
+  // bg
+  ctx.fillStyle = '#021826'; ctx.fillRect(0,0,W,H);
+  // chests
+  chests.forEach(c=>{ ctx.fillStyle='#ffcc66'; ctx.fillRect(c.x-12,c.y-8,24,16); ctx.strokeStyle='#774400'; ctx.strokeRect(c.x-12,c.y-8,24,16); });
+  // enemies
+  enemies.forEach(e=>{
+    const hpPct = Math.max(0,e.hp)/e.hpMax;
+    ctx.beginPath(); ctx.fillStyle = '#ff5566'; ctx.arc(e.x,e.y,e.r,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#222'; ctx.fillRect(e.x - e.r, e.y - e.r - 12, e.r*2, 6);
+    ctx.fillStyle='#3ee'; ctx.fillRect(e.x - e.r, e.y - e.r - 12, e.r*2 * hpPct, 6);
+  });
+  // projectiles
+  projectiles.forEach(p=>{ ctx.beginPath(); ctx.fillStyle = p.color || '#fff'; ctx.arc(p.x,p.y,6,0,Math.PI*2); ctx.fill(); });
+  // player
+  ctx.beginPath(); ctx.fillStyle = '#4fc3f7'; ctx.arc(player.x,player.y,player.r,0,Math.PI*2); ctx.fill();
+  // player HP bar
+  ctx.fillStyle='#222'; ctx.fillRect(player.x-32, player.y+26, 64,8);
+  ctx.fillStyle='#77ff88'; ctx.fillRect(player.x-32, player.y+26, 64 * (state.hp/state.hpMax), 8);
+}
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(0.06, (now - last)/1000); last = now;
+  // movement
+  const sp = 160;
+  if(keys.w) player.y -= sp*dt; if(keys.s) player.y += sp*dt; if(keys.a) player.x -= sp*dt; if(keys.d) player.x += sp*dt;
+  player.x = Math.max(40, Math.min(W-40, player.x)); player.y = Math.max(40, Math.min(H-40, player.y));
+  // projectiles update
+  for(let i=projectiles.length-1;i>=0;i--){
+    const p = projectiles[i];
+    p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt;
+    for(let j=enemies.length-1;j>=0;j--){
+      const e = enemies[j];
+      if(distance(p.x,p.y,e.x,e.y) < e.r + 6){
+        applyDamageToEnemy(e, p.dmg, p.fruitId);
+        projectiles.splice(i,1); break;
+      }
+    }
+    if(p && p.life <= 0){ const idx = projectiles.indexOf(p); if(idx>=0) projectiles.splice(idx,1); }
+  }
+  // enemies AI
+  enemies.forEach(e=>{
+    const dx = player.x - e.x, dy = player.y - e.y; const d = Math.sqrt(dx*dx+dy*dy);
+    if(d > 6){
+      e.x += (dx/d) * e.speed * dt * 0.4; e.y += (dy/d) * e.speed * dt * 0.4;
+    }
+    if(d < e.r + player.r + 6){
+      if(!e.lastHit || Date.now() - e.lastHit > 900){
+        const dmg = Math.max(2, Math.floor(e.lvl/3)); state.hp -= dmg; e.lastHit = Date.now();
+        if(state.hp <= 0){ state.hp = state.hpMax; player.x = W/2; player.y = H/2; showFlash('Bạn đã chết — hồi phục'); }
+      }
+    }
+  });
+  // level up
+  checkLevelUp();
+  // spawn more if low
+  if(enemies.length < Math.max(3, Math.floor(state.level/6))) spawnEnemiesForLevel(state.level);
+  // update chests if none: ensure some exist
+  if(chests.length === 0) spawnChestsForLevel(state.level);
+  // render
+  draw(); renderHud();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ---------- Initialization ---------- */
+function spawnChestsForLevel(lv){ // local chests variable used earlier
+  chests = [];
+  const count = 1 + Math.floor(Math.random()*2);
+  for(let i=0;i<count;i++){
+    const id = 'ch_'+lv+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    const c = {id, x:Math.random()*(W-200)+100, y:Math.random()*(H-200)+100, lv, opened:false};
+    if(state.openedChests[c.id]) c.opened=true;
+    if(!c.opened) chests.push(c);
+  }
+}
+function spawnChestsForLevel(lv){ chests = []; const count = 1 + Math.floor(Math.random()*2); for(let i=0;i<count;i++){ const id='ch_'+lv+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); const c={id,x:Math.random()*(W-200)+100,y:Math.random()*(H-200)+100,lv,opened:false}; if(!state.openedChests[c.id]) chests.push(c); } }
+function spawnEnemiesForLevel(lv){ // replace prior for safety
+  const count = Math.min(10, 3 + Math.floor(lv/5));
+  for(let i=0;i<count;i++){
+    const size = 10 + Math.min(24, Math.floor(lv/12));
+    const hp = Math.round(18 + lv*6 + Math.random()*lv*2);
+    enemies.push({id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), x:Math.random()*(W-200)+100, y:Math.random()*(H-200)+100, r:size, hp, hpMax:hp, lvl:lv, speed: 30 + Math.min(90, Math.floor(lv/3)), lastHit:0});
+  }
+}
+
+// initial spawns
+spawnEnemiesForLevel(state.level); spawnChestsForLevel(state.level); renderInvGacha(); saveState();
+
+/* ---------- UI actions ---------- */
+function equipFruit(id){
+  if((state.inventory[id]||0) <= 0){
+    // allow eating directly for demo
+    state.inventory[id] = (state.inventory[id]||0) + 0;
+    showFlash('Bạn chưa có ' + fruitById[id].name + ' — hãy mua hoặc nhận');
+    return;
+  }
+  // use one fruit from inventory to eat (optional)
+  // for demo, eating does not consume - we allow direct equip
+  state.currentFruit = id; if(!state.mastery[id]) state.mastery[id]=0; showFlash('Đã ăn ' + fruitById[id].name); saveState(); renderHud();
+}
+function eatFruitDirect(id){ // helper: give and eat
+  state.inventory[id] = (state.inventory[id]||0) + 1; state.currentFruit = id; saveState(); renderHud(); showFlash('Bạn nhận & ăn ' + fruitById[id].name);
+}
+
+/* ---------- Shop / Gacha modal controls ---------- */
+document.getElementById('closeGacha').addEventListener('click', ()=> gachaModal.style.display='none');
+document.getElementById('closeShop').addEventListener('click', ()=> shopModal.style.display='none');
+document.getElementById('gachaOpen').addEventListener('click', openGacha);
+document.getElementById('shopOpen').addEventListener('click', openShop);
+function openGacha(){ if(state.level < 30){ showFlash('Cần level 30 để mở Gacha'); } gachaModal.style.display='block'; renderInvGacha(); }
+function openShop(){ shopModal.style.display='block'; }
+
+/* ---------- Chest open (click near) binding ---------- */
+window.addEventListener('keydown', e => { if(e.key.toLowerCase()==='c') openChestNear(); }); // press C to open nearby chest convenience
+function openChestNear(){ const ch = chests.find(c=> distance(c.x,c.y,player.x,player.y) < 80); if(!ch) return showFlash('Không có rương gần'); // reward
+  const r=Math.random()*100; if(r<55){ const g=80+Math.floor(Math.random()*160)+state.level*5; state.gold+=g; showFlash('Mở rương: +' + g + ' vàng'); }
+  else if(r<90){ const ex=6+Math.floor(Math.random()*8)+Math.floor(state.level/3); state.exp+=ex; showFlash('Mở rương: +' + ex + ' EXP'); }
+  else{ const pool = Math.random()<0.2 ? fruits.filter(f=>f.rarity==='legend') : fruits.filter(f=>f.rarity==='rare'); const f = pool[Math.floor(Math.random()*pool.length)]; state.inventory[f.id]=(state.inventory[f.id]||0)+1; showFlash('Mở rương: nhận ' + f.name); }
+  state.openedChests[ch.id]=true; chests=chests.filter(x=>x!==ch); saveState(); renderHud(); renderInvGacha();
+}
+
+/* ---------- Redeem codes ---------- */
+const codes = {'FREEEXP':{exp:500}, 'FREEMONEY':{gold:1000}, 'RAREDFRUIT':{fruit:'fire'}};
+document.getElementById('applyCode').addEventListener('click', ()=>{
+  const raw = document.getElementById('codeInput').value.trim().toUpperCase(); if(!raw) return;
+  if(codes[raw]){ const p=codes[raw]; if(p.exp) state.exp += p.exp; if(p.gold) state.gold += p.gold; if(p.fruit) state.inventory[p.fruit] = (state.inventory[p.fruit]||0)+1; showFlash('Áp dụng mã: ' + raw); document.getElementById('codeInput').value=''; saveState(); renderHud(); renderInvGacha(); }
+  else showFlash('Mã không hợp lệ');
+});
+
+/* ---------- Helpers exposed for debug ---------- */
+window._state = state;
+window._save = saveState;
+window._spawn = ()=>{ spawnEnemiesForLevel(state.level); spawnChestsForLevel(state.level); };
+
+/* ---------- small helpers ---------- */
+function renderInvGacha(){ invGachaEl.innerHTML=''; fruits.forEach(f=>{ const div=document.createElement('div'); div.style.display='flex'; div.style.justifyContent='space-between'; div.style.padding='6px'; div.style.borderBottom='1px solid rgba(255,255,255,0.03)'; div.innerHTML=`<div><strong>${f.name}</strong><div style="font-size:12px;color:#cfe8ff">Mastery: ${state.mastery[f.id]||0}</div></div><div>${state.inventory[f.id]||0}</div>`; invGachaEl.appendChild(div); }); }
+
+/* ---------- utility functions ---------- */
+function rarityMultiplier(r){ return (r==='common'?0.5:(r==='rare'?1.0:1.6)); }
+function getThresholdsByRarity(r){ if(r==='common') return [50,150,300]; if(r==='rare') return [100,300,600]; return [200,600,1200]; }
+
+/* ---------- Initialize HUD & loop ---------- */
+function renderHud(){ // update UI
+  goldEl.innerText = state.gold; levelEl.innerText = state.level;
+  currentFruitEl.innerText = state.currentFruit ? fruitById[state.currentFruit].name : 'Chưa có';
+  const sel = state.currentFruit; const m = sel ? state.mastery[sel]||0 : 0; masteryValEl.innerText = m;
+  if(sel){ const thr=getThresholdsByRarity(fruitById[sel].rarity); const next=thr.find(t=>m< t)||thr[thr.length-1]; const prev=thr[thr.indexOf(next)-1]||0; const pct = Math.min(100, Math.max(0, Math.floor((m-prev)/(next-prev)*100))); masteryFillEl.style.width = isNaN(pct)?'0%':pct+'%'; const open=[1]; if(m>=thr[0])open.push(2); if(m>=thr[1])open.push(3); if(m>=thr[2])open.push(4); skillsOpenEl.innerText = open.join(', ');} else {masteryFillEl.style.width='0%'; skillsOpenEl.innerText='-';}
+  const nextExp = expToNext(state.level); expEl.innerText = state.exp; expMaxEl.innerText = nextExp; expFillEl.style.width = Math.min(100, Math.floor(state.exp/nextExp*100)) + '%';
+  hpEl.innerText = state.hp; hpMaxEl.innerText = state.hpMax || 100;
+}
+renderHud(); renderInvGacha(); saveState();
+
+/* ---------- animation loop already started above ---------- */
+// Note: loop() is declared earlier, we already called requestAnimationFrame(loop) earlier so it's running.
+
+showFlash('Sẵn sàng — WASD di chuyển, Click trái đánh, 1..4 chiêu, G: Gacha, H: Shop, C: mở rương gần, R: lưu.');
+
+</script>
+</body>
+</html>
