@@ -3,22 +3,27 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Blox Fruit — Demo (Tiếng Việt) — Có icon & âm thanh</title>
+<title>Blox Fruit — Demo (Tiếng Việt)</title>
 <style>
   :root{--bg:#071022;--panel:rgba(0,0,0,0.55);--accent:#1e90ff}
   html,body{height:100%;margin:0;background:linear-gradient(#041323,#071022);font-family:Inter,Arial,Helvetica,sans-serif;color:#e6eef8;overflow:hidden}
-  .panel{background:var(--panel);padding:10px;border-radius:10px}
+  #ui{position:fixed;left:12px;top:12px;z-index:1200;min-width:320px}
+  .panel{background:var(--panel);padding:10px;border-radius:10px;margin-bottom:10px}
+  .small{font-size:13px;color:#cfe8ff}
+  #score{position:fixed;right:12px;top:12px;z-index:1200;background:var(--panel);padding:10px;border-radius:10px}
   canvas{display:block;margin:0 auto;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,0.7);background:linear-gradient(180deg,#0b2430,#04202b)}
-  #ui{position:fixed;left:12px;top:12px;z-index:1200;min-width:300px}
-  #score{position:fixed;right:12px;top:12px;z-index:1200}
   #fruitBar{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;display:flex;gap:8px;z-index:1200}
   .slot{width:72px;height:72px;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;flex-direction:column;border:1px solid rgba(255,255,255,0.04)}
   .slot img{width:48px;height:48px;object-fit:contain;pointer-events:none}
   button{padding:6px 10px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer}
   .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:880px;max-width:96%;background:rgba(6,10,18,0.98);padding:14px;border-radius:12px;z-index:2200;display:none}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .box{flex:1;min-width:200px;background:rgba(255,255,255,0.03);padding:8px;border-radius:8px}
   #flash{position:fixed;left:50%;top:12%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,0.6);padding:8px 14px;border-radius:10px;display:none}
   input[type=text]{padding:6px;border-radius:6px;border:1px solid #444;background:rgba(255,255,255,0.02);color:#fff}
-  .small{font-size:13px;color:#cfe8ff}
+  footer{position:fixed;left:12px;bottom:12px;color:#9fb7cf;font-size:12px}
+  .small-muted{font-size:12px;color:#9fb7cf}
+  .info-line{display:flex;justify-content:space-between;gap:8px;align-items:center}
 </style>
 </head>
 <body>
@@ -29,8 +34,8 @@
     </div>
     <div class="panel">
       <div>Quả đang dùng: <strong id="currentFruit">Chưa có</strong></div>
-      <div>Mastery: <strong id="masteryVal">0</strong> · Chiêu mở: <span id="skillsOpen">-</span></div>
-      <div style="margin-top:6px">Level: <strong id="level">1</strong> / 670 · EXP: <span id="exp">0</span>/<span id="expMax">100</span></div>
+      <div>Mastery: <strong id="masteryVal">0</strong> · <span class="small">Chiêu mở: <span id="skillsOpen">-</span></span></div>
+      <div style="margin-top:6px" class="info-line"><div>Level: <strong id="level">1</strong> / 670</div><div>EXP: <span id="exp">0</span>/<span id="expMax">100</span></div></div>
     </div>
   </div>
 
@@ -46,55 +51,40 @@
 
   <div id="fruitBar"></div>
 
-  <div id="gachaModal" class="modal"><h3>Máy Gacha (mở Level ≥ 30)</h3><div id="gachaMachinesRow" class="row"></div><h4>Inventory</h4><div id="invGacha" style="max-height:200px;overflow:auto;padding:8px;background:rgba(255,255,255,0.02)"></div><div style="text-align:right;margin-top:8px"><button id="closeGacha">Đóng</button></div></div>
+  <div id="gachaModal" class="modal">
+    <h3>Máy Gacha (mở Level ≥ 30)</h3>
+    <div id="gachaMachinesRow" class="row"></div>
+    <h4>Inventory</h4>
+    <div id="invGacha" style="max-height:200px;overflow:auto;padding:8px;background:rgba(255,255,255,0.02)"></div>
+    <div style="text-align:right;margin-top:8px"><button id="closeGacha">Đóng</button></div>
+  </div>
 
-  <div id="shopModal" class="modal"><h3>Cửa hàng</h3><div id="shopRow" class="row"></div><div style="text-align:right;margin-top:8px"><button id="closeShop">Đóng</button></div></div>
+  <div id="shopModal" class="modal">
+    <h3>Cửa hàng</h3>
+    <div id="shopRow" class="row"></div>
+    <div style="text-align:right;margin-top:8px"><button id="closeShop">Đóng</button></div>
+  </div>
 
-  <div style="position:fixed;right:12px;top:12px;width:300px;z-index:1300">
+  <div style="position:fixed;right:12px;top:12px;width:320px;z-index:1300">
     <div class="panel">
       <h4>Mã thưởng</h4>
       <input id="codeInput" placeholder="Nhập mã (FREEEXP,...)" type="text" style="width:100%"><div style="text-align:right;margin-top:8px"><button id="applyCode">Áp dụng</button></div>
-      <div class="small" style="margin-top:6px">Ví dụ: FREEEXP, FREEMONEY, RAREDFRUIT</div>
+      <div class="small-muted" style="margin-top:8px">Ví dụ: FREEEXP, FREEMONEY, RAREDFRUIT</div>
     </div>
   </div>
 
   <div id="flash"></div>
-  <footer style="position:fixed;left:12px;bottom:12px;color:#9fb7cf;font-size:12px">Demo — thay link ảnh/âm thanh trong phần ASSETS</footer>
+  <footer>Demo — copy dán file index.html & bật GitHub Pages</footer>
 
 <script>
-/* ========================= ASSETS (THAY LINK Ở ĐÂY) =========================
-  - Thay các giá trị image/audio = "<PUT_YOUR_IMAGE_URL_HERE>" hoặc link tĩnh CDN.
-  - Ví dụ ảnh PNG (dùng jsDelivr / raw.githubusercontent.com / Imgur...).
-  - Nếu bạn không có, giữ placeholder (trắng) thì game vẫn chạy.
-*/
-const ASSETS = {
-  mango: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  apple: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  pear: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  pine: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  banana: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  berry: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  ice: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  storm: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  earth: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  sand: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  wood: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  metal: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  dragon: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  phoenix: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"},
-  shadow: {image: "<PUT_YOUR_IMAGE_URL_HERE>", sfx: "<PUT_YOUR_AUDIO_URL_HERE>"}
-};
-
-// a tiny transparent PNG data URI used as default placeholder so <img> never broken
-const TRANSPARENT_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgQmCj4kAAAAASUVORK5CYII=";
-
-/* ========================= GAME (giữ nguyên logic) ========================= */
+/* ================== Setup & Data ================== */
 const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
-const storageKey = 'bf_full_demo_assets_v1';
+const storageKey = 'bf_full_demo_v2';
 const MAX_LEVEL = 670;
 function expToNext(lv){ return Math.floor(100 * Math.pow(1.035, lv-1)); }
 
+// 15 fruits
 const fruits = [
   {id:'mango', name:'Xoài', rarity:'common', price:100, color:'#ffb74d', masteryScale:0.6},
   {id:'apple', name:'Táo', rarity:'common', price:150, color:'#ff6b6b', masteryScale:0.6},
@@ -114,26 +104,14 @@ const fruits = [
 ];
 const fruitById = {}; fruits.forEach(f=> fruitById[f.id]=f);
 
-// load state
+// load state or defaults
 let state = JSON.parse(localStorage.getItem(storageKey) || 'null') || {
   pos:{x:W/2,y:H/2}, level:1, exp:0, gold:200, hp:100, hpMax:100,
   currentFruit:null, mastery:{}, inventory:{}, openedChests:{}
 };
 fruits.forEach(f=> { if(state.mastery[f.id]===undefined) state.mastery[f.id]=0; if(state.inventory[f.id]===undefined) state.inventory[f.id]=0; });
 
-// preload images & audio
-const IMAGES = {}, SFX = {};
-for(const fid in ASSETS){
-  const url = ASSETS[fid].image || TRANSPARENT_PNG;
-  const img = new Image();
-  img.src = (url && url !== "<PUT_YOUR_IMAGE_URL_HERE>") ? url : TRANSPARENT_PNG;
-  IMAGES[fid] = img;
-  const s = new Audio();
-  if(ASSETS[fid].sfx && ASSETS[fid].sfx !== "<PUT_YOUR_AUDIO_URL_HERE>") s.src = ASSETS[fid].sfx;
-  SFX[fid] = s;
-}
-
-/* ========== UI refs ========== */
+/* UI elements */
 const goldEl = document.getElementById('gold'), levelEl = document.getElementById('level'),
       currentFruitEl = document.getElementById('currentFruit'), masteryValEl = document.getElementById('masteryVal'),
       skillsOpenEl = document.getElementById('skillsOpen'), expEl = document.getElementById('exp'),
@@ -143,29 +121,22 @@ const fruitBar = document.getElementById('fruitBar'), shopRow = document.getElem
 const gachaModal = document.getElementById('gachaModal'), shopModal = document.getElementById('shopModal');
 const flashEl = document.getElementById('flash');
 
-/* ========== Build UI: Fruit bar (with icons) ========== */
+/* Build UI */
 fruits.slice(0,12).forEach((f,i)=>{
   const slot = document.createElement('div'); slot.className='slot'; slot.dataset.id=f.id;
-  const img = document.createElement('img'); img.src = (IMAGES[f.id] && IMAGES[f.id].src) || TRANSPARENT_PNG; img.alt = f.name;
-  slot.appendChild(img);
   const lbl = document.createElement('div'); lbl.style.fontSize='11px'; lbl.style.marginTop='4px'; lbl.innerText = f.name;
   slot.appendChild(lbl);
   slot.addEventListener('click', ()=> equipFruit(f.id));
   fruitBar.appendChild(slot);
 });
 
-/* ========== Shop & Gacha build (in DOM) ========== */
-(function buildShopAndGacha(){
-  // shopRow and gachaMachinesRow already in DOM as invisible container earlier; ensure present
-  if(!document.getElementById('shopRow')){
-    const shopContainer = document.createElement('div'); shopContainer.id='shopRow'; shopContainer.style.display='none'; document.body.appendChild(shopContainer);
-  }
-  if(!document.getElementById('gachaMachinesRow')){
-    const gachaContainer = document.createElement('div'); gachaContainer.id='gachaMachinesRow'; gachaContainer.style.display='none'; document.body.appendChild(gachaContainer);
-  }
+// ensure shop/gacha containers exist (hidden)
+(function ensureContainers(){
+  if(!document.getElementById('shopRow')){ const s=document.createElement('div'); s.id='shopRow'; s.style.display='none'; document.body.appendChild(s); }
+  if(!document.getElementById('gachaMachinesRow')){ const g=document.createElement('div'); g.id='gachaMachinesRow'; g.style.display='none'; document.body.appendChild(g); }
 })();
 fruits.forEach(f=>{
-  const el = document.createElement('div'); el.className='box';
+  const el=document.createElement('div'); el.className='box';
   el.innerHTML = `<strong>${f.name}</strong><div style="font-size:12px;color:#cfe8ff">${f.rarity}</div><div style="margin-top:6px">Giá: <strong>${f.price}</strong></div><div style="margin-top:8px"><button class="buy-btn" data-id="${f.id}">Mua</button></div>`;
   document.getElementById('shopRow').appendChild(el);
 });
@@ -173,59 +144,59 @@ document.addEventListener('click', e=>{
   const btn = e.target.closest('.buy-btn'); if(!btn) return;
   const id = btn.dataset.id; const f = fruitById[id];
   if(state.gold < f.price){ showFlash('Không đủ vàng'); return; }
-  state.gold -= f.price; state.inventory[id] = (state.inventory[id]||0) + 1; showFlash('Đã mua ' + f.name); saveState(); renderHud(); renderInvGacha();
+  state.gold -= f.price; state.inventory[id] = (state.inventory[id]||0)+1; showFlash('Đã mua ' + f.name); saveState(); renderHud(); renderInvGacha();
 });
+
+/* Gacha machines */
 const gachaMachines = [
   {id:'normal', title:'Máy Thường', cost:50, rates:{common:70,rare:25,legend:5}},
   {id:'advanced', title:'Máy Xịn', cost:200, rates:{common:40,rare:40,legend:20}},
   {id:'legend', title:'Máy Huyền', cost:1000, rates:{common:20,rare:40,legend:40}}
 ];
 gachaMachines.forEach(m=>{
-  const el = document.createElement('div'); el.className='box';
+  const el=document.createElement('div'); el.className='box';
   el.innerHTML = `<strong>${m.title}</strong><div>Giá: <strong>${m.cost}</strong></div><div style="margin-top:8px"><button class="gacha-btn" data-id="${m.id}">Quay</button></div>`;
   document.getElementById('gachaMachinesRow').appendChild(el);
 });
 document.getElementById('gachaMachinesRow').addEventListener('click', e=>{
-  const btn = e.target.closest('.gacha-btn'); if(!btn) return;
-  rollGacha(btn.dataset.id);
+  const btn = e.target.closest('.gacha-btn'); if(!btn) return; rollGacha(btn.dataset.id);
 });
 function renderInvGacha(){
-  if(!invGachaEl) return;
-  invGachaEl.innerHTML = '';
+  if(!invGachaEl) return; invGachaEl.innerHTML='';
   fruits.forEach(f=>{
-    const d = document.createElement('div'); d.style.display='flex'; d.style.justifyContent='space-between'; d.style.padding='6px'; d.style.borderBottom='1px solid rgba(255,255,255,0.03)';
+    const d=document.createElement('div'); d.style.display='flex'; d.style.justifyContent='space-between'; d.style.padding='6px'; d.style.borderBottom='1px solid rgba(255,255,255,0.03)';
     d.innerHTML = `<div><strong>${f.name}</strong><div style="font-size:12px;color:#cfe8ff">Mastery: ${state.mastery[f.id]||0}</div></div><div>${state.inventory[f.id]||0}</div>`;
     invGachaEl.appendChild(d);
   });
 }
 
-/* ========== Save / Flash ========== */
+/* Save & Flash */
 function saveState(){ localStorage.setItem(storageKey, JSON.stringify(state)); }
 function showFlash(text, time=1400){ flashEl.innerText = text; flashEl.style.display='block'; flashEl.style.opacity='1'; setTimeout(()=>{ flashEl.style.opacity='0'; setTimeout(()=> flashEl.style.display='none',300); }, time); }
 
-/* ========== Player & Input ========== */
+/* Player & input */
 let player = {x: state.pos.x, y: state.pos.y, r:20, vy:0, onGround:false};
 const keys = {w:false,a:false,s:false,d:false,space:false};
 window.addEventListener('keydown', e=>{
   const k=e.key.toLowerCase();
   if(k==='w') keys.w=true; if(k==='a') keys.a=true; if(k==='s') keys.s=true; if(k==='d') keys.d=true;
-  if(e.code === 'Space') keys.space=true;
+  if(e.code==='Space') keys.space=true;
   if(e.key==='1') useSkill(1);
-  if(k==='r'){ saveState(); showFlash('Đã lưu progress'); }
+  if(k==='r'){ saveState(); showFlash('Đã lưu'); }
   if(k==='g') openGacha(); if(k==='h') openShop();
   if(k==='c') openChestNear();
 });
 window.addEventListener('keyup', e=>{
   const k=e.key.toLowerCase();
   if(k==='w') keys.w=false; if(k==='a') keys.a=false; if(k==='s') keys.s=false; if(k==='d') keys.d=false;
-  if(e.code === 'Space') keys.space=false;
+  if(e.code==='Space') keys.space=false;
 });
 canvas.addEventListener('mousedown', (ev)=>{ if(ev.button===0) performNormalAttack(); });
 
-/* ========== Entities ========== */
+/* Entities */
 let projectiles = [], enemies = [], chests = [];
 
-/* ========== Spawn functions ========== */
+/* Spawn enemies & chests */
 function spawnEnemiesForLevel(lv){
   const count = Math.min(10, 3 + Math.floor(lv/6));
   for(let i=0;i<count;i++){
@@ -244,11 +215,9 @@ function spawnChestsForLevel(lv){
   }
 }
 
-/* ========== Combat & Projectiles ========== */
+/* Combat & projectiles */
 function spawnProjectile(x,y,vx,vy,life,dmg,color,fruitId,extra){
   projectiles.push({x,y,vx,vy,life,dmg,color,fruitId,extra});
-  // play sfx if available
-  if(fruitId && SFX[fruitId] && SFX[fruitId].src) try{ SFX[fruitId].currentTime = 0; SFX[fruitId].play(); }catch(e){}
 }
 function applyDamageToEnemy(e,dmg,fruitId){
   e.hp -= dmg;
@@ -282,7 +251,7 @@ function performNormalAttack(){
   } else showFlash('Không có quái gần');
 }
 
-/* ========== Skill system (chiêu 1 mỗi quả) ========== */
+/* Skills: chiêu 1 mỗi fruit */
 function useSkill(idx){
   if(!state.currentFruit){ showFlash('Bạn chưa ăn quả'); return; }
   if(idx !== 1){ showFlash('Chỉ có Chiêu 1 (phím 1) trong demo này'); return; }
@@ -300,8 +269,8 @@ function useSkill(idx){
     case 'sand': spawnBurst(8,200, Math.round(24+state.level/4), 'sand', f.color); break;
     case 'wood': aoe(120, Math.round(20+state.level/3), 'wood', f.color); break;
     case 'metal': heavyNearest(Math.round(200 + state.level*2.2), 'metal'); break;
-    case 'dragon': for(let i=-2;i<=2;i++){ spawnProjectile(player.x, player.y, 200 + i*30, -60 + Math.random()*20, 1.2, Math.round(60 + state.level/2), 'dragon', 'dragon'); } showFlash('Long hỏa!'); break;
-    case 'phoenix': for(let i=0;i<9;i++){ const ang = -Math.PI/2 + (i-4)*0.18; spawnProjectile(player.x, player.y, Math.cos(ang)*260, Math.sin(ang)*260, 1.4, Math.round(44 + state.level/3), 'phoenix', 'phoenix'); } showFlash('Phượng tái sinh!'); break;
+    case 'dragon': for(let i=-2;i<=2;i++){ spawnProjectile(player.x, player.y, 200 + i*30, -60 + Math.random()*20, 1.2, Math.round(60 + state.level/2), '#ff7b2d', 'dragon'); } showFlash('Long hỏa!'); break;
+    case 'phoenix': for(let i=0;i<9;i++){ const ang = -Math.PI/2 + (i-4)*0.18; spawnProjectile(player.x, player.y, Math.cos(ang)*260, Math.sin(ang)*260, 1.4, Math.round(44 + state.level/3), '#ff7fbf', 'phoenix'); } showFlash('Phượng tái sinh!'); break;
     case 'shadow': { let nearest=null, nd=1e9; enemies.forEach(e=>{ const d = distance(player.x,player.y,e.x,e.y); if(d<nd){ nd=d; nearest=e;} }); if(nearest){ player.x = nearest.x - 30; player.y = nearest.y; applyDamageToEnemy(nearest, Math.round(120 + state.level*1.6), 'shadow'); showFlash('Đòn Bóng!'); } else showFlash('Không có mục tiêu cho Bóng'); } break;
     default: spawnBurst(6,220, Math.round(18 + state.level/6), fid, f.color); break;
   }
@@ -310,7 +279,7 @@ function useSkill(idx){
   saveState(); renderHud(); renderInvGacha();
 }
 
-/* helper skills */
+/* Skill helpers */
 function spawnBurst(count, speed, dmg, fruitId, color){
   for(let i=0;i<count;i++){
     const ang = (i/count)*Math.PI*2 + (Math.random()-0.5)*0.18;
@@ -320,29 +289,36 @@ function spawnBurst(count, speed, dmg, fruitId, color){
 }
 function aoe(radius, dmg, fruitId, color){
   enemies.forEach(e=>{ if(distance(player.x,player.y,e.x,e.y) <= radius) applyDamageToEnemy(e, dmg, fruitId); });
-  for(let a=0;a<18;a++){
-    const ang = (a/18)*Math.PI*2;
-    spawnProjectile(player.x + Math.cos(ang)*10, player.y + Math.sin(ang)*10, Math.cos(ang)*60, Math.sin(ang)*60, 0.7, Math.round(dmg/1.2), color, fruitId);
-  }
+  for(let a=0;a<18;a++){ const ang=(a/18)*Math.PI*2; spawnProjectile(player.x + Math.cos(ang)*10, player.y + Math.sin(ang)*10, Math.cos(ang)*60, Math.sin(ang)*60, 0.7, Math.round(dmg/1.2), color, fruitId); }
   showFlash('AOE ' + (fruitById[fruitId]?.name || '') );
 }
 function heavyNearest(dmg, fruitId){
   let nearest=null, nd=1e9; enemies.forEach(e=>{ const d=distance(player.x,player.y,e.x,e.y); if(d<nd){ nd=d; nearest=e; }});
-  if(nearest && nd < 1000) applyDamageToEnemy(nearest, dmg, fruitId), showFlash('Đánh mạnh -'+dmg);
-  else showFlash('Không có mục tiêu gần');
+  if(nearest && nd < 1000) applyDamageToEnemy(nearest, dmg, fruitId), showFlash('Đánh mạnh -'+dmg); else showFlash('Không có mục tiêu gần');
 }
 function pierceLine(dmg, fruitId){
   enemies.forEach(e=>{ const dx=e.x-player.x, dy=e.y-player.y; if(Math.abs(dx)<80 && dy<160 && dy>-40) applyDamageToEnemy(e,dmg,fruitId); });
   showFlash('Chiêu xuyên ' + dmg);
 }
 
-/* ========== Chest / Gacha / Shop / Codes ========== */
+/* Chest / open */
 function spawnChestsForLevelIfEmpty(lv){ if(chests.length===0) spawnChestsForLevel(lv); }
-function openChestNear(){ const found = chests.find(c=> distance(c.x,c.y,player.x,player.y) < 80); if(!found){ showFlash('Không có rương gần'); return; } const r = Math.random()*100; if(r < 55){ const goldGain = 60 + Math.floor(Math.random()*180) + state.level*4; state.gold += goldGain; showFlash('Mở rương: +' + goldGain + ' vàng'); } else if(r < 90){ const ex = 6 + Math.floor(Math.random()*8) + Math.floor(state.level/3); state.exp += ex; showFlash('Mở rương: +' + ex + ' EXP'); } else { const pool = Math.random()<0.2 ? fruits.filter(f=>f.rarity==='legend') : fruits.filter(f=>f.rarity==='rare'); const f = pool[Math.floor(Math.random()*pool.length)]; state.inventory[f.id] = (state.inventory[f.id]||0)+1; showFlash('Mở rương: nhận ' + f.name); } state.openedChests[found.id] = true; chests = chests.filter(c=>c.id !== found.id); saveState(); renderHud(); renderInvGacha(); }
+function openChestNear(){
+  const found = chests.find(c=> distance(c.x,c.y,player.x,player.y) < 80);
+  if(!found){ showFlash('Không có rương gần'); return; }
+  const r = Math.random()*100;
+  if(r < 55){ const goldGain = 60 + Math.floor(Math.random()*180) + state.level*4; state.gold += goldGain; showFlash('Mở rương: +' + goldGain + ' vàng'); }
+  else if(r < 90){ const ex = 6 + Math.floor(Math.random()*8) + Math.floor(state.level/3); state.exp += ex; showFlash('Mở rương: +' + ex + ' EXP'); }
+  else{ const pool = Math.random()<0.2 ? fruits.filter(f=>f.rarity==='legend') : fruits.filter(f=>f.rarity==='rare'); const f = pool[Math.floor(Math.random()*pool.length)]; state.inventory[f.id] = (state.inventory[f.id]||0)+1; showFlash('Mở rương: nhận ' + f.name); }
+  state.openedChests[found.id] = true; chests = chests.filter(c=>c.id !== found.id); saveState(); renderHud(); renderInvGacha();
+}
 
+/* Gacha */
 function rollGacha(machineId){
   if(state.level < 30){ showFlash('Cần Level 30 để dùng Gacha'); return; }
-  const machine = gachaMachines.find(m=>m.id === machineId); if(!machine) return; if(state.gold < machine.cost){ showFlash('Không đủ vàng'); return; } state.gold -= machine.cost;
+  const machine = gachaMachines.find(m=>m.id === machineId); if(!machine) return;
+  if(state.gold < machine.cost){ showFlash('Không đủ vàng'); return; }
+  state.gold -= machine.cost;
   const r = Math.random()*100; let chosen;
   if(r < machine.rates.common) chosen = 'common'; else if(r < machine.rates.common + machine.rates.rare) chosen = 'rare'; else chosen = 'legend';
   const pool = fruits.filter(f=> (chosen==='common' ? f.rarity==='common' : (chosen==='rare' ? f.rarity==='rare' : f.rarity==='legend')));
@@ -352,19 +328,24 @@ function rollGacha(machineId){
   saveState(); renderInvGacha(); renderHud();
 }
 
-const gachaMachines = [
-  {id:'normal', title:'Máy Thường', cost:50, rates:{common:70,rare:25,legend:5}},
-  {id:'advanced', title:'Máy Xịn', cost:200, rates:{common:40,rare:40,legend:20}},
-  {id:'legend', title:'Máy Huyền', cost:1000, rates:{common:20,rare:40,legend:40}}
-];
+/* Level up */
+function checkLevelUp(){
+  while(state.level < MAX_LEVEL && state.exp >= expToNext(state.level)){
+    state.exp -= expToNext(state.level);
+    state.level++;
+    state.hpMax = 100 + Math.floor(state.level * 0.8);
+    state.hp = state.hpMax;
+    showFlash('Lên cấp ' + state.level);
+    spawnEnemiesForLevel(state.level); spawnChestsForLevel(state.level);
+  }
+}
 
-function checkLevelUp(){ while(state.level < MAX_LEVEL && state.exp >= expToNext(state.level)){ state.exp -= expToNext(state.level); state.level++; state.hpMax = 100 + Math.floor(state.level * 0.8); state.hp = state.hpMax; showFlash('Lên cấp ' + state.level); spawnEnemiesForLevel(state.level); spawnChestsForLevel(state.level); } }
-
-/* ========== Utilities & Loop ========== */
+/* Utilities */
 function distance(x1,y1,x2,y2){ const dx=x1-x2, dy=y1-y2; return Math.sqrt(dx*dx+dy*dy); }
 function rarityMultiplier(r){ return (r==='common'?0.5: (r==='rare'?1.0:1.6)); }
 function getThresholdsByRarity(r){ if(r==='common') return [50,150,300]; if(r==='rare') return [100,300,600]; return [200,600,1200]; }
 
+/* Render & loop */
 function renderHud(){
   goldEl.innerText = state.gold;
   levelEl.innerText = state.level;
@@ -395,8 +376,22 @@ function loop(now){
   if(player.y + player.r > H-40){ player.y = H-40 - player.r; player.vy = 0; player.onGround = true; } else player.onGround = false;
   if(keys.space && player.onGround){ player.vy = -420; player.onGround = false; }
   player.x = Math.max(40, Math.min(W-40, player.x));
-  for(let i=projectiles.length-1;i>=0;i--){ const p = projectiles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; for(let j=enemies.length-1;j>=0;j--){ const e = enemies[j]; if(distance(p.x,p.y,e.x,e.y) < e.r + 6){ applyDamageToEnemy(e, p.dmg, p.fruitId); projectiles.splice(i,1); break; } } if(p && p.life <= 0){ const idx = projectiles.indexOf(p); if(idx>=0) projectiles.splice(idx,1); } }
-  enemies.forEach(e=>{ const dx = player.x - e.x, dy = player.y - e.y; const d = Math.sqrt(dx*dx+dy*dy); if(d > 6){ e.x += (dx/d) * e.speed * dt * 0.3; e.y += (dy/d) * e.speed * dt * 0.1; } if(d < e.r + player.r + 6){ if(!e.lastHit || Date.now() - e.lastHit > 900){ const dmg = Math.max(2, Math.floor(e.lvl/3)); state.hp -= dmg; e.lastHit = Date.now(); if(state.hp <= 0){ state.hp = state.hpMax; player.x = W/2; player.y = H/2; showFlash('Bạn đã chết — hồi phục'); } } } });
+  // projectiles update
+  for(let i=projectiles.length-1;i>=0;i--){
+    const p = projectiles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+    for(let j=enemies.length-1;j>=0;j--){
+      const e = enemies[j];
+      if(distance(p.x,p.y,e.x,e.y) < e.r + 6){ applyDamageToEnemy(e, p.dmg, p.fruitId); projectiles.splice(i,1); break; }
+    }
+    if(p && p.life <= 0){ const idx = projectiles.indexOf(p); if(idx>=0) projectiles.splice(idx,1); }
+  }
+  enemies.forEach(e=>{
+    const dx = player.x - e.x, dy = player.y - e.y; const d = Math.sqrt(dx*dx+dy*dy);
+    if(d > 6){ e.x += (dx/d) * e.speed * dt * 0.3; e.y += (dy/d) * e.speed * dt * 0.1; }
+    if(d < e.r + player.r + 6){
+      if(!e.lastHit || Date.now() - e.lastHit > 900){ const dmg = Math.max(2, Math.floor(e.lvl/3)); state.hp -= dmg; e.lastHit = Date.now(); if(state.hp <= 0){ state.hp = state.hpMax; player.x = W/2; player.y = H/2; showFlash('Bạn đã chết — hồi phục'); } }
+    }
+  });
   if(enemies.length < Math.max(3, Math.floor(state.level/6))) spawnEnemiesForLevel(state.level);
   spawnChestsForLevelIfEmpty(state.level);
   checkLevelUp();
@@ -405,7 +400,7 @@ function loop(now){
 }
 requestAnimationFrame(loop);
 
-/* ========== UI actions & bindings ========== */
+/* UI actions */
 function equipFruit(id){ if((state.inventory[id]||0) <= 0){ showFlash('Bạn chưa có ' + fruitById[id].name); return; } state.currentFruit = id; showFlash('Đã ăn ' + fruitById[id].name); saveState(); renderHud(); }
 function eatFruitDirect(id){ state.inventory[id] = (state.inventory[id]||0) + 1; state.currentFruit = id; saveState(); renderHud(); showFlash('Bạn nhận & ăn ' + fruitById[id].name); }
 
@@ -416,7 +411,7 @@ document.getElementById('shopOpen').addEventListener('click', openShop);
 function openGacha(){ if(state.level < 30){ showFlash('Cần level 30 để mở Gacha'); } gachaModal.style.display='block'; renderInvGacha(); }
 function openShop(){ shopModal.style.display='block'; }
 
-/* Codes redeem */
+/* Codes */
 const codes = {'FREEEXP':{exp:500}, 'FREEMONEY':{gold:1000}, 'RAREDFRUIT':{fruit:'dragon'}};
 document.getElementById('applyCode').addEventListener('click', ()=>{
   const raw = document.getElementById('codeInput').value.trim().toUpperCase(); if(!raw) return;
@@ -424,11 +419,11 @@ document.getElementById('applyCode').addEventListener('click', ()=>{
   else showFlash('Mã không hợp lệ');
 });
 
-/* helpers for debug */
+/* Helpers & debug */
 window._state = state; window._save = saveState; window._spawn = ()=>{ spawnEnemiesForLevel(state.level); spawnChestsForLevel(state.level); };
 
-/* init */
-spawnEnemiesForLevel(state.level); spawnChestsForLevel(state.level); renderInvGacha(); saveState(); renderHud(); showFlash('Sẵn sàng — chèn link ảnh/âm thanh trong ASSETS nếu có.');
+/* Init */
+spawnEnemiesForLevel(state.level); spawnChestsForLevel(state.level); renderInvGacha(); saveState(); renderHud(); showFlash('Sẵn sàng — WASD di chuyển, Space nhảy, Click đánh, 1 chiêu, G: Gacha, H: Shop, C: mở rương, R: lưu.');
 
 </script>
 </body>
